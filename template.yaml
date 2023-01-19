@@ -1,0 +1,43 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  raven oncall information
+
+Globals:
+  Function:
+    Timeout: 10
+    MemorySize: 128
+
+Resources:
+  RavenFunction:
+    Type: AWS::Serverless::Function 
+    Properties:
+      CodeUri: main/
+      Handler: main
+      Runtime: go1.x
+      Architectures:
+        - x86_64
+      Events:
+        CatchAll:
+          Type: Api
+          Properties:
+            Path: /
+            Method: POST
+      Environment:
+        Variables:
+          apikey: KMSENCRYPTEDAPIKEY
+          pd_schedule_id: PZXYWD #you can find your pagerduty schedule page
+      Policies:
+      - Statement:
+        - Sid: ravenKMSDecryptRole
+          Effect: Allow
+          Action:
+          - kms:Describe*
+          - kms:Get*
+          - kms:List
+          Resource: 'arn:aws:kms:eu-west-1:ACCOUNTID:key/KMSKEYID'
+Outputs:
+  APIEndpoint:
+    Description: "API Gateway endpoint URL for Prod environment"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
+
